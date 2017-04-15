@@ -25,20 +25,21 @@ We provide wrapper classes to access them: dataset_hdf5.py and corpus_hdf5.py
 
 The queries and documents can be accessed using the Python code below (the h5py package is required):
 
+#get a tuple of training, validation and test lists of queries and relevant documents 
 ```
 import dataset_hdf5
 dt = dataset_hdf5.DatasetHDF5('path/to/the/dataset.hdf5')
 
-#get a tuple of training, validation and test lists of queries and relevant documents 
 queries_train, queries_valid, queries_test = dt.get_queries()
 doc_ids_train, doc_ids_valid, doc_ids_test = dt.get_doc_ids()
-
+```
 
 # iterate over all documents in the corpus:
 
 ```
 import corpus_hdf5
 cp = corpus_hdf5.CorpusHDF5('path/to/the/corpus.hdf5')
+
 for i, text in enumerate(cp.get_text_iter()):
     print 'text:', text
     print 'title:', cp.get_article_title(i)
