@@ -1,12 +1,13 @@
 # WebNav
 
 A Query Reformulation Framework based on Deep Reinforcement Learning.
+
 Link to the paper: [Task-Oriented Query Reformulation with Reinforcement Learning]()
 
 
 ## WikiNav Dataset and Other Files
 
-The datasets and auxiliary files can be [downloaded here](https://drive.google.com/drive/folders/0B5LbsF7OcHjqV1JFX3AyQkJQakk?usp=sharing):
+The datasets and auxiliary files can be [downloaded here](https://drive.google.com/drive/folders/0BwmD_VLjROrfLWk3QmctMXpWRkE?usp=sharing):
 
 * **msa_dataset.hdf5**: MS Academic dataset: queries and relevant document pairs. A query is the title of a paper and the ground-truth documents are the papers cited within.
 * **msa_corpus.hdf5**: Each document in the corpus consists of a paper title and abstract.
