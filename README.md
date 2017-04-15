@@ -9,12 +9,12 @@ Link to the paper: [Task-Oriented Query Reformulation with Reinforcement Learnin
 
 The datasets and auxiliary files can be [downloaded here](https://drive.google.com/drive/folders/0BwmD_VLjROrfLWk3QmctMXpWRkE?usp=sharing):
 
-* **msa_dataset.hdf5**: MS Academic dataset: queries and relevant document pairs. A query is the title of a paper and the ground-truth documents are the papers cited within.
-* **msa_corpus.hdf5**: Each document in the corpus consists of a paper title and abstract.
+* **msa_dataset.hdf5**: MS Academic dataset: a query is the title of a paper and the ground-truth documents are the papers cited within.
+* **msa_corpus.hdf5**: MS Academic corpus: each document consists of a paper title and abstract.
 * **jeopardy_dataset.hdf5**: Jeopardy dataset: queries are Jeopardy! TV Show questions and answers are the Wikipedia articles whose title is the answer.
-* **jeopardy_corpus.hdf5**: Jeopardy Corpus: All English Wikipedia Articles (5.9M documents).
+* **jeopardy_corpus.hdf5**: Jeopardy Corpus: All the English Wikipedia Articles (5.9M documents).
 * **trec-car_dataset.hdf5**: [TREC-CAR dataset](http://trec-car.cs.unh.edu/): a query is Wikipedia article title + a section within that article. Ground-truth documents are paragraphs within that section.
-* **trec-car_corpus.hdf5**: TREC-CAR Corpus: All English Wikipedia Paragraphs, except the abstracts.
+* **trec-car_corpus.hdf5**: TREC-CAR Corpus: Half of the English Wikipedia Paragraphs (3.5M), except abstracts.
 * **D_cbow_pdw_8B.pkl**: a python dictionary containing 374,000 words where the values are pretrained embeddings from ["Word2Vec tool"](https://code.google.com/archive/p/word2vec/).
 
 ## Accessing the Dataset
@@ -23,10 +23,10 @@ The datasets are stored in the HDF5 format.
 
 We provide wrapper classes to access them: dataset_hdf5.py and corpus_hdf5.py
 
-The queries and documents can be accessed using the Python code below (the h5py package is required):
+The queries and documents can be accessed using the Python code below (h5py package is required):
 
 ```
-#get a tuple of training, validation and test lists of queries and relevant documents:
+#get training, validation and test lists of queries and relevant documents:
 
 import dataset_hdf5
 dt = dataset_hdf5.DatasetHDF5('path/to/the/dataset.hdf5')
@@ -79,14 +79,11 @@ We recommend that you have at least 32GB of RAM. If you are going to use a GPU, 
 If you use this code as part of any published research, please acknowledge the
 following paper:
 
-**"TITLE"**  
-AUTHORS*To appear CONFERENCE (2016)*
-
     @article{x,
-        title={x},
+        title={Task-Oriented Query Reformulation with Reinforcement Learning},
         author={x},
         journal={x},
-        year={}
+        year={2017}
     } 
 
 ## License
