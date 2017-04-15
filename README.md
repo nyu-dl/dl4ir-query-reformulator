@@ -57,7 +57,7 @@ THEANO_FLAGS='floatX=float32' python run.py
 If you want to use a GPU:
 
 ```
-THEANO_FLAGS='floatX=float32,device=gpu0,nvcc.fastmath=True' python run.py
+THEANO_FLAGS='floatX=float32,device=gpu0' python run.py
 ```
 
 
@@ -70,6 +70,7 @@ To run the code, you will need:
 * [Theano 0.9 or higher](http://deeplearning.net/software/theano/)
 * [NLTK](http://www.nltk.org/)
 * [h5py](http://www.h5py.org/)
+* [PyLucene 6.2 or higher](http://lucene.apache.org/pylucene/)
 
 We recommend that you have at least 32GB of RAM. If you are going to use a GPU, the card must have at least 6GB.
 
