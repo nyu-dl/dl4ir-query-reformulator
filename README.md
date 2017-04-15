@@ -5,7 +5,7 @@ A Query Reformulation Framework based on Deep Reinforcement Learning.
 Link to the paper: [Task-Oriented Query Reformulation with Reinforcement Learning]()
 
 
-## WikiNav Dataset and Other Files
+## Dataset and Other Files
 
 The datasets and auxiliary files can be [downloaded here](https://drive.google.com/drive/folders/0BwmD_VLjROrfLWk3QmctMXpWRkE?usp=sharing):
 
@@ -26,7 +26,8 @@ We provide wrapper classes to access them: dataset_hdf5.py and corpus_hdf5.py
 The queries and documents can be accessed using the Python code below (the h5py package is required):
 
 ```
-#get a tuple of training, validation and test lists of queries and relevant documents 
+#get a tuple of training, validation and test lists of queries and relevant documents:
+
 import dataset_hdf5
 dt = dataset_hdf5.DatasetHDF5('path/to/the/dataset.hdf5')
 
@@ -35,6 +36,7 @@ doc_ids_train, doc_ids_valid, doc_ids_test = dt.get_doc_ids()
 
 
 # iterate over all documents in the corpus:
+
 import corpus_hdf5
 cp = corpus_hdf5.CorpusHDF5('path/to/the/corpus.hdf5')
 
