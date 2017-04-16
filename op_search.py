@@ -4,14 +4,11 @@ Custom theano class to query the search engine.
 '''
 
 import numpy as np
-import nltk
 import theano
 from theano import gof
 from theano import tensor
-import time
 import parameters as prm
 import utils
-from collections import OrderedDict
 import average_precision
 import supervised
 import random
@@ -26,10 +23,6 @@ class Search(theano.Op):
 
 
     def make_node(self, x1, x2, x3, x4, x5):
-        # check that the theano version has support for __props__.
-        # This next line looks like it has a typo,
-        # but it's actually a way to detect the theano version
-        # is sufficiently recent to support the use of __props__.
         assert hasattr(self, '_props'), "Your version of theano is too old to support __props__."
         x1 = tensor.as_tensor_variable(x1)
         x2 = tensor.as_tensor_variable(x2)
@@ -45,7 +38,6 @@ class Search(theano.Op):
 
 
     def perform(self, node, inputs, output_storage):
-        st = time.time()
         q_m = inputs[0]
         D_truth = inputs[1]
         n_iter = int(inputs[2])
@@ -91,7 +83,6 @@ class Search(theano.Op):
 
         qs = []
         for i, q_lst in enumerate(self.options['current_queries']):
-            #st1 = time.time()
             q = []
             for j, word in enumerate(q_lst):
                 if q_m[i,j] == 1:
@@ -100,19 +91,13 @@ class Search(theano.Op):
 
             if len(q) == 0:
                 q = 'dummy'
-            #print 'query to lucene:', q
             qs.append(q)
 
         # only used to print the reformulated queries.
         self.options['reformulated_queries'][n_iter] = qs
 
-        st1 = time.time()
-
         # always return one more candidate because one of them might be the input doc.
         candss = self.options['engine'].get_candidates(qs, max_cand, prm.max_feedback_docs, save_cache, extra_terms)
-        st11 = time.time() - st1
-        st22 = 0.
-        st33 = 0.
 
         for i, cands in enumerate(candss):
 
@@ -125,7 +110,6 @@ class Search(theano.Op):
 
             j = 0
             m = 0
-            all_txt = ''
             cand_ids = []
 
             if prm.supervised:
@@ -208,7 +192,6 @@ class Search(theano.Op):
                 # This operation does not raise an error if the element is not there.
                 cands_set.discard(input_doc_id) 
 
-            st2 = time.time()
             intersec = len(set(D_truth_dic.keys()) & cands_set)
             recall = intersec / max(1., float(len(D_truth_dic)))
             precision = intersec / max(1., float(prm.max_candidates))

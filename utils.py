@@ -259,7 +259,6 @@ def augment(texts, dic_thes):
                 if word in dic_thes:
                     
                     synonym = min(np.random.geometric(0.5), len(dic_thes[word])-1) #chose the synonym based on a geometric distribution
-                    #print 'fp',fp,"word", word,"synonym",dic_thes[word][synonym]
                     words[idx] = dic_thes[word][synonym]
 
             out.append(" ".join(words))

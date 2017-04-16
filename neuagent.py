@@ -1,29 +1,25 @@
 # -*- coding: utf-8 -*-
 '''
-Build and run the RNN model
+Build and train the query reformulator model
 '''
 import cPickle as pkl
 import time
 import numpy as np
 import theano
 import theano.tensor as tensor
-from theano import config
-from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
-from collections import OrderedDict
 import utils
-from sklearn.decomposition import PCA
 import corpus_hdf5
 import dataset_hdf5
 import parameters as prm
-import matplotlib
-matplotlib.use('Agg') # Must be before importing matplotlib.pyplot or pylab since the server might not have an X server.
-import matplotlib.pyplot as plt
 import nltk
 import random
-from op_search import Search
 import sys
-import os.path
 import h5py
+from theano import config
+from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
+from collections import OrderedDict
+from sklearn.decomposition import PCA
+from op_search import Search
 
 
 reload(sys)
@@ -31,9 +27,6 @@ sys.setdefaultencoding('utf8')
 
 # only print four decimals on float arrays.
 np.set_printoptions(linewidth=150, formatter={'float': lambda x: "{0:0.4f}".format(x)})
-
-# compute_test_value is 'off' by default, meaning this feature is inactive
-#theano.config.compute_test_value = 'warn' # Use 'warn' to activate this feature
 
 # Set the random number generators' seeds for consistency
 SEED = 123
@@ -43,35 +36,6 @@ np.random.seed(SEED)
 def numpy_floatX(data):
     return np.asarray(data, dtype=config.floatX)
 
-
-def vis_probs(words, probs, uidx, n_iter, options):
-    query = []
-    for kk, word in enumerate(words):
-        word = word.decode('utf-8', 'ignore')
-        if word == '':
-            break
-        elif word.lower() in options['vocab']:
-            query.append(word)
-        else:
-            query.append(word + ' (UNK)')
-
-    fig,ax=plt.subplots(figsize=(24,10))
-    width = 1.0     # gives histogram aspect to the bar diagram
-    pos = np.arange(len(query))
-    # the histogram of the data
-    plt.bar(pos, probs[:len(query)], width)
-    plt.plot(pos, len(pos)*[0.5], 'black', linewidth=2)
-    plt.ylim([0.,1.])
-    plt.xlabel('Query Words')
-    plt.ylabel('Probability')
-
-    ax.set_xticks(pos + (width / 2))
-    ax.set_xticklabels(query, fontsize=12)
-    plt.xticks(rotation=90)
-    plt.grid(True)  
-    #plt.show()
-    plt.savefig('vis_update' + str(uidx) + '_iter' + str(n_iter) + '.png')
-    plt.close()
 
 
 def np_floatX(data):
@@ -259,9 +223,6 @@ def init_params(options):
         for i in range(len(n_hidden_critic)-1):
             params['C'+str(i)] = 0.01 * np.random.randn(n_hidden_critic[i], n_hidden_critic[i+1]).astype(config.floatX) # score
             params['bC'+str(i)] = np.zeros((n_hidden_critic[i+1],)).astype(config.floatX) # bias score
-
-        # set initial bias towards low scores.
-        #params['bC'+str(i)] = -0.5 * np.ones((1,)).astype(config.floatX) # bias
   
     n_features = [prm.dim_emb,] + prm.filters_cand
     for i in range(len(prm.filters_cand)):
@@ -688,12 +649,6 @@ def build_model(tparams, options):
     oracle_mode = tensor.fscalar('oracle_mode') # if = 1, force ground-truth selection. If = 0, follow strategy. Only used in supervised learning.
     q_i = tensor.imatrix('q_i') # input query
     D_gt_id = tensor.imatrix('D_gt_id')
-    
-
-    """
-    q.tag.test_value = np.zeros((prm.batch_size_train,prm.n_consec*prm.max_words_input), dtype='int32')
-    q_m.tag.test_value = np.ones((prm.batch_size_train,prm.n_consec*prm.max_words_input), dtype=theano.config.floatX)
-    """
 
     out = f(q_i, D_gt_id, tparams, is_train, oracle_mode, trng, options)
     
@@ -952,17 +907,6 @@ def train():
     dh5 = dataset_hdf5.DatasetHDF5(prm.dataset_path)
     qi_train, qi_valid, qi_test = dh5.get_queries()
     dt_train, dt_valid, dt_test = dh5.get_doc_ids()
-
-    #print 'Limiting training size to 200...'
-    #def shuffle(a, b):
-    #    c = list(zip(a, b))
-    #    random.shuffle(c)
-    #    a, b = zip(*c)
-    #    return a, b
-
-    #qi_train, dt_train = shuffle(qi_train, dt_train)
-    #qi_train = qi_train[:200]
-    #dt_train = dt_train[:200]
     
     if prm.supervised:
         options['supervised'] = -2 * np.ones((len(qi_train), prm.max_feedback_docs_train, prm.max_words_input), np.int32)
@@ -989,9 +933,6 @@ def train():
     print '%d train examples' % len(qi_train)
     print '%d valid examples' % len(qi_valid)
     print '%d test examples' % len(qi_test)
-
-    #nltk.download('punkt')
-    #options['tokenizer'] = nltk.data.load('tokenizers/punkt/english.pickle')
 
     # This create the initial parameters as np ndarrays.
     # Dict name (string) -> np ndarray
@@ -1094,8 +1035,6 @@ def train():
                         bl = out.pop(0)
                         cost_bl = out.pop(0)
                         D_id = out.pop(0)
-                        #if uidx % 1000 == 0:
-                        #    vis_probs(options['current_queries'][0][prm.max_words_input:], prob[0,:,1], uidx, ii, options)
                         print 
                         print 'Iteration', ii
                         print 'Baseline Value', bl.mean(), 'Cost', cost_bl
