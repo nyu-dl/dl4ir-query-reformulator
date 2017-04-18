@@ -2,7 +2,7 @@
 
 A Query Reformulation Framework based on Deep Reinforcement Learning.
 
-Link to the paper: [Task-Oriented Query Reformulation with Reinforcement Learning]()
+Link to the paper: [Task-Oriented Query Reformulation with Reinforcement Learning](https://arxiv.org/abs/1704.04572)
 
 
 ## Dataset and Other Files
@@ -32,7 +32,7 @@ import dataset_hdf5
 dt = dataset_hdf5.DatasetHDF5('path/to/the/dataset.hdf5')
 
 queries_train, queries_valid, queries_test = dt.get_queries()
-doc_ids_train, doc_ids_valid, doc_ids_test = dt.get_doc_ids()
+doc_titles_train, doc_titles_valid, doc_titles_test = dt.get_doc_ids()
 
 
 # iterate over all documents in the corpus:
