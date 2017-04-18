@@ -1,4 +1,4 @@
-# WebNav
+# QueryReformulator
 
 A Query Reformulation Framework based on Deep Reinforcement Learning.
 
