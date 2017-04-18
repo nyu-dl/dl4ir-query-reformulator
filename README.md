@@ -80,10 +80,10 @@ We recommend that you have at least 32GB of RAM. If you are going to use a GPU, 
 If you use this code as part of any published research, please acknowledge the
 following paper:
 
-    @article{x,
+    @article{nogueira2016task,
         title={Task-Oriented Query Reformulation with Reinforcement Learning},
-        author={x},
-        journal={x},
+        author={Nogueira, Rodrigo and Cho, Kyunghyun},
+        journal={arXiv preprint arXiv:1704.04572},
         year={2017}
     } 
 
