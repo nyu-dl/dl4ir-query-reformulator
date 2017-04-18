@@ -683,7 +683,7 @@ def build_model(tparams, options):
                 pos_mask = D_i_gt_r * D_m_r
                 neg_mask = (1 - D_i_gt_r) * D_m_r
                 cost_i = -tensor.log(prob[:,:,1] + off) * pos_mask / tensor.maximum(1., pos_mask.sum(1))[:,None]
-                cost_i += -tensor.log(prob[:,:,0] + off) * neg_mask / tensor.maximum(1., neg_mask.sum(1))[:,None]
+                cost_i += -tensor.log(1 - prob[:,:,0] + off) * neg_mask / tensor.maximum(1., neg_mask.sum(1))[:,None]
                 cost += cost_i.sum()
             else:
                 r_ = theano.gradient.disconnected_grad(r)
