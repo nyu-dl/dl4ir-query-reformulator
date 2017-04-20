@@ -3,6 +3,7 @@
 A Query Reformulation Framework based on Deep Reinforcement Learning.
 
 Link to the paper: [Task-Oriented Query Reformulation with Reinforcement Learning](https://arxiv.org/abs/1704.04572)
+
 [Slides](https://github.com/nyu-dl/QueryReformulator/blob/master/Slides.pdf)
 
 ## Dataset and Other Files
