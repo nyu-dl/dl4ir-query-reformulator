@@ -187,28 +187,13 @@ def init_params(options):
 
     params['W'] = 0.01 * np.random.randn(prm.n_words, prm.dim_emb).astype(config.floatX) # vocab to word embeddings
     params['UNK'] = 0.01 * np.random.randn(1, prm.dim_emb).astype(config.floatX) # vector for unknown words.
-    if prm.state_encoder.lower() == 'lstm':
-        mul = 4
-    else:
-        mul = 1
 
     n_features = [prm.dim_emb,] + prm.filters_query
     for i in range(len(prm.filters_query)):
         params['Ww_att_q'+str(i)] = 0.01 * np.random.randn(n_features[i+1], n_features[i], 1, prm.window_query[i]).astype(config.floatX)
         params['bw_att_q'+str(i)] = np.zeros((n_features[i+1],)).astype(config.floatX) # bias score
 
-    if prm.att_query:
-        params['att_Q'] = 0.01 * np.random.randn(n_features[-1], prm.dim_proj).astype(config.floatX)
-        if prm.state_encoder.lower() == 'lstm':
-            params['att_H'] = 0.01 * np.random.randn(prm.dim_emb, prm.dim_proj).astype(config.floatX)
-        elif prm.state_encoder.lower() in ['ff', 'null']:
-            params['att_X'] = 0.01 * np.random.randn(prm.dim_emb, prm.dim_proj).astype(config.floatX)
-        params['att_b'] = 0.01 * np.zeros((prm.dim_proj)).astype(config.floatX)
-        params['att_S'] = 0.01 * np.random.randn(prm.dim_proj,1).astype(config.floatX)
-        params['att_bS'] = 0.01 * np.zeros((1)).astype(config.floatX)
-        params['Aq'] = 0.01 * np.random.randn(n_features[-1], mul * prm.dim_proj).astype(config.floatX) # score
-    else:
-        params['Aq'] = 0.01 * np.random.randn(n_features[-1], mul * prm.dim_proj).astype(config.floatX) # score
+    params['Aq'] = 0.01 * np.random.randn(n_features[-1], prm.dim_proj).astype(config.floatX) # score
 
     n_hidden_actor = [prm.dim_proj] + prm.n_hidden_actor + [2]
     for i in range(len(n_hidden_actor)-1):
@@ -217,34 +202,19 @@ def init_params(options):
 
     # set initial bias towards not selecting words.
     params['bV'+str(i)] = np.array([10., 0.]).astype(config.floatX) # bias score
+    
+    n_hidden_critic = [prm.dim_proj] + prm.n_hidden_critic + [1]
+    for i in range(len(n_hidden_critic)-1):
+        params['C'+str(i)] = 0.01 * np.random.randn(n_hidden_critic[i], n_hidden_critic[i+1]).astype(config.floatX) # score
+        params['bC'+str(i)] = np.zeros((n_hidden_critic[i+1],)).astype(config.floatX) # bias score
 
-    if not prm.supervised:
-        n_hidden_critic = [prm.dim_proj] + prm.n_hidden_critic + [1]
-        for i in range(len(n_hidden_critic)-1):
-            params['C'+str(i)] = 0.01 * np.random.randn(n_hidden_critic[i], n_hidden_critic[i+1]).astype(config.floatX) # score
-            params['bC'+str(i)] = np.zeros((n_hidden_critic[i+1],)).astype(config.floatX) # bias score
-  
     n_features = [prm.dim_emb,] + prm.filters_cand
     for i in range(len(prm.filters_cand)):
         params['Ww_att_c_0_'+str(i)] = 0.01 * np.random.randn(n_features[i+1], n_features[i], 1, prm.window_cand[i]).astype(config.floatX)
         params['bw_att_c_0_'+str(i)] = np.zeros((n_features[i+1],)).astype(config.floatX) # bias score
 
-    if prm.cand_terms_source.lower() in ['syn', 'synemb', 'all']:
-        params['As'] = 0.01 * np.random.randn(prm.dim_emb, n_features[-1]).astype(config.floatX)
-        params['bAs'] = np.zeros((n_features[-1],)).astype(config.floatX) # bias score
-
     params['Ad'] = 0.01 * np.random.randn(n_features[-1], prm.dim_proj).astype(config.floatX) # score
     params['bAd'] = np.zeros((prm.dim_proj,)).astype(config.floatX) # bias score
-
-    if prm.state_encoder.lower() == 'ff':
-        params['Sp'] = 0.01 * np.random.randn(prm.dim_emb, prm.dim_proj).astype(config.floatX)
-
-    elif prm.state_encoder.lower() == 'lstm':
-        params['Sp'] = 0.01 * np.random.randn(prm.dim_emb, 4 * prm.dim_proj).astype(config.floatX)
-        params['Sh'] = 0.01 * np.random.randn(prm.dim_proj, 4 * prm.dim_proj).astype(config.floatX)
-        params['bS'] = np.zeros((4 * prm.dim_proj,)).astype(config.floatX) # bias
-        params['h_init'] = 0.01 * np.random.randn(prm.dim_proj).astype(config.floatX)
-        params['c_init'] = 0.01 * np.random.randn(prm.dim_proj).astype(config.floatX)
 
     if prm.fixed_wemb:
         exclude_params['W'] = True
@@ -283,7 +253,7 @@ def conv_cand(D_a, tparams, n_iter):
     return D_a
 
 
-def f(q_i, D_gt_id, tparams, is_train, oracle_mode, trng, options):
+def f(q_i, D_gt_id, tparams, is_train, trng, options):
 
     # Use search engine again to compute the reward/metrics given a query.
     search = Search(options)
@@ -303,10 +273,6 @@ def f(q_i, D_gt_id, tparams, is_train, oracle_mode, trng, options):
 
     q_a_avg = q_a.sum(1) / tensor.maximum(1., q_m.sum(1, keepdims=True))
 
-    if prm.state_encoder.lower() == 'lstm':
-        h = tparams['h_init'][None,:]
-        c = tparams['c_init'][None,:]
-
     out = []
     for n_iter in range(prm.n_iterations):
 
@@ -316,34 +282,17 @@ def f(q_i, D_gt_id, tparams, is_train, oracle_mode, trng, options):
             D_m_r = tensor.zeros((q_a.shape[0], prm.max_words_input))
         else:
             if n_iter > 0:
-                D_mi_ = (D_i_ > -2).astype('float32')
-                D_a_ = W_[D_i_.flatten()].reshape((D_i_.shape[0], D_i_.shape[1], D_i_.shape[2], prm.dim_emb)) * D_mi_[:,:,:,None]
-                D_m_ *= D_mi_
+                D_m_ = (D_i_ > -2).astype('float32')
+                D_a_ = W_[D_i_.flatten()].reshape((D_i_.shape[0], D_i_.shape[1], D_i_.shape[2], prm.dim_emb)) * D_m_[:,:,:,None]
             else:
                 D_a_ = 1. * q_a[:,None,:,:]
                 D_m_ = 1. * q_m[:,None,:]
 
-            if (prm.cand_terms_source.lower() in ['syn', 'synemb', 'all']) and (n_iter > 0):
-                # do not apply convolution on synonyms.
-                D_aa_syn = tensor.tanh(tensor.dot(D_a_[:,-prm.syns_per_word:,:,:], tparams['As']) + tparams['bAs'])  
 
             if len(prm.filters_cand) > 0:
-                if (prm.cand_terms_source.lower() in ['syn', 'synemb', 'all']) and (n_iter > 0):
-                    if prm.cand_terms_source.lower() == 'all':
-                        D_aa_doc = conv_cand(D_a_[:,:prm.max_feedback_docs,:,:], tparams, 0)
-                        D_aa_ = tensor.concatenate([D_aa_doc, D_aa_syn], axis=1)
-                    else:
-                        D_aa_ = D_aa_syn
-                else:
-                    D_aa_ = conv_cand(D_a_, tparams, 0)
+                D_aa_ = conv_cand(D_a_, tparams, 0)
             else:
-                if prm.cand_terms_source.lower() in ['syn', 'synemb', 'all']:
-                    if n_iter > 0:
-                        D_aa_ = tensor.tanh(tensor.dot(D_a_[:,-prm.syns_per_word:,:,:], tparams['As']) + tparams['bAs'])
-                    else:
-                        D_aa_ = D_a_
-                else:
-                    D_aa_ = D_a_
+                D_aa_ = D_a_
 
             D_aa_ = tensor.dot(D_aa_, tparams['Ad']) + tparams['bAd']
 
@@ -366,83 +315,31 @@ def f(q_i, D_gt_id, tparams, is_train, oracle_mode, trng, options):
 
             D_m_r = D_m.reshape((D_m.shape[0],-1))
 
-            if prm.att_query:
-                if prm.state_encoder.lower() in ['null', 'ff']:
-                    e = tensor.dot(q_aa, tparams['att_Q'])[:,:,None,:]
-                    e += tensor.dot(D_a_r, tparams['att_X'])[:,None,:,:]
-                    e += tparams['att_b']
-                    e = tensor.tanh(e)
-                    e = tensor.dot(e, tparams['att_S']) + tparams['att_bS']
-                    e = e.reshape((e.shape[0],e.shape[1],e.shape[2]))
-                    alpha = softmax_mask(e, q_m[:,:,None])
-                    q_a_rep = tensor.extra_ops.repeat(q_aa[:,:,None,:], D_a_r.shape[1], axis=2)
-                    q_aa_att = (alpha[:,:,:,None] * q_a_rep).sum(1)                
-
-                elif prm.state_encoder.lower() == 'lstm':
-                    e = tensor.dot(q_aa, tparams['att_Q'])
-                    e += tensor.dot(h, tparams['att_H'])[:,None,:]
-                    e += tparams['att_b']
-                    e = tensor.tanh(e)
-                    e = tensor.dot(e, tparams['att_S']) + tparams['att_bS']
-                    e = e.reshape((e.shape[0],e.shape[1]))
-                    alpha = softmax_mask(e, q_m)
-                    q_aa_att = (alpha[:,:,None] * q_aa).sum(1)                
-
-            else:
-                q_aa_avg = q_aa.sum(1) / tensor.maximum(1., q_m.sum(1, keepdims=True))
-
-                if prm.state_encoder.lower() == 'lstm':
-                    q_aa_att = q_aa_avg
-                else:
-                    q_aa_att = q_aa_avg[:,None,:]
-
+       
+            q_aa_avg = q_aa.sum(1) / tensor.maximum(1., q_m.sum(1, keepdims=True))
+            q_aa_att = q_aa_avg[:,None,:]
             q_aa_att = tensor.dot(q_aa_att, tparams['Aq'])
 
-            if prm.state_encoder.lower() in ['ff', 'lstm']:
-                sel_prev_ = tensor.zeros((D_aa_r.shape[0], D_aa_r.shape[1]))
+            z = D_aa_r + q_aa_att
 
-                if n_iter > 0:
-                    sel_prev_ = tensor.set_subtensor(sel_prev_[:,:sel_prev.shape[1]], sel_prev + sel_prev[:,:sel_prev.shape[1]])
-                    sel_prev = (sel_prev_ > 0).astype('float32')
-                else:
-                    sel_prev = sel_prev_
+            # estimate reward based on the query.
+            bl = theano.gradient.grad_scale(z, 0.1)
+            D_m_r_c = theano.gradient.disconnected_grad(D_m_r)
+            bl = bl.sum(1) / tensor.maximum(1., D_m_r_c.sum(1))[:,None]
+            for i in range(len(prm.n_hidden_critic)+1):
+                if prm.dropout > 0:
+                    bl = dropout_layer(bl, is_train, trng)
+                bl = tensor.maximum(0., bl)
+                bl = tensor.dot(bl, tparams['C'+str(i)]) + tparams['bC'+str(i)]
 
-                D_ap = tensor.dot(D_a_r, tparams['Sp']) * sel_prev[:,:,None]
-
-            if prm.state_encoder.lower() == 'null':
-                z = D_aa_r + q_aa_att
-
-            elif prm.state_encoder.lower() == 'ff':
-                z = D_aa_r + q_aa_att + D_ap
-
-            elif prm.state_encoder.lower() == 'lstm':
-                D_ap = D_ap.sum(1) / tensor.maximum(1., sel_prev.sum(1))[:,None]
-                h_rot = tensor.dot(h, tparams['Sh'])
-                x = D_ap + q_aa_att + h_rot + tparams['bS']
-                h, c = lstm_layer(x, h, c)
-                z = D_aa_r + h[:,None,:]
-
-            if not prm.supervised:
-                # estimate reward based on the query.
-                bl = theano.gradient.grad_scale(z, 0.1)
-                D_m_r_c = theano.gradient.disconnected_grad(D_m_r)
-                bl = bl.sum(1) / tensor.maximum(1., D_m_r_c.sum(1))[:,None]
-                for i in range(len(prm.n_hidden_critic)+1):
-                    if prm.dropout > 0:
-                        bl = dropout_layer(bl, is_train, trng)
-                    bl = tensor.maximum(0., bl)
-                    bl = tensor.dot(bl, tparams['C'+str(i)]) + tparams['bC'+str(i)]
-
-                bl = tensor.tanh(bl)
-                bl = bl.flatten()
-            else:
-                bl = tensor.zeros((z.shape[0],))
+            bl = tensor.tanh(bl)
+            bl = bl.flatten()
+    
 
             for i in range(len(prm.n_hidden_actor)+1):
                 if prm.dropout > 0:
                     z = dropout_layer(z, is_train, trng)
-                if not (prm.state_encoder.lower() == 'lstm' and i == 0):
-                    z = tensor.maximum(0., z)
+                z = tensor.maximum(0., z)
                 z = tensor.dot(z, tparams['V'+str(i)]) + tparams['bV'+str(i)]
 
             prob = softmax_mask(z) * D_m_r[:,:,None]
@@ -469,17 +366,9 @@ def f(q_i, D_gt_id, tparams, is_train, oracle_mode, trng, options):
             else:
                 ans = ones
 
-        if prm.supervised and n_iter > 0:
-            ans_oracle = tensor.set_subtensor(ans[:,prm.max_words_input:], D_i_gt.reshape((D_i_gt.shape[0], -1)))
-            ans = ans_oracle * oracle_mode + ans * (1 - oracle_mode)
+        metrics, D_i_, D_id_, D_gt_m_ = search(ans, D_gt_id, n_iter, is_train)
 
-        if prm.supervised:
-            metrics, D_i_, D_m_, D_id_, D_gt_m_, D_i_gt = search(ans, D_gt_id, n_iter, oracle_mode, is_train)
-        else:
-            metrics, D_i_, D_m_, D_id_, D_gt_m_ = search(ans, D_gt_id, n_iter, oracle_mode, is_train)
-            D_i_gt = 0
-
-        out.append([prob, ans, metrics, bl, D_m_r, D_id_, D_i_gt])
+        out.append([prob, ans, metrics, bl, D_m_r, D_id_])
 
     return out
 
@@ -646,17 +535,16 @@ def build_model(tparams, options):
     consider_constant = []
 
     is_train = tensor.fscalar('is_train') # if = 1, training time.
-    oracle_mode = tensor.fscalar('oracle_mode') # if = 1, force ground-truth selection. If = 0, follow strategy. Only used in supervised learning.
     q_i = tensor.imatrix('q_i') # input query
     D_gt_id = tensor.imatrix('D_gt_id')
 
-    out = f(q_i, D_gt_id, tparams, is_train, oracle_mode, trng, options)
+    out = f(q_i, D_gt_id, tparams, is_train, trng, options)
     
     cost = 0.
     out_p = []
     out_s = []
     reward_last = 0
-    for i, (prob, ans, metrics, bl, D_m_r, D_id, D_i_gt) in enumerate(out):
+    for i, (prob, ans, metrics, bl, D_m_r, D_id) in enumerate(out):
         learn = True
 
         # if frozen until is enabled.
@@ -677,19 +565,10 @@ def build_model(tparams, options):
             else:
                 cap = 0
 
-            if prm.supervised:
-                neg = prob[:,:,0]
-                D_i_gt_r = D_i_gt_last.reshape((D_i_gt_last.shape[0],-1))
-                pos_mask = D_i_gt_r * D_m_r
-                neg_mask = (1 - D_i_gt_r) * D_m_r
-                cost_i = -tensor.log(prob[:,:,1] + off) * pos_mask / tensor.maximum(1., pos_mask.sum(1))[:,None]
-                cost_i += -tensor.log(prob[:,:,0] + off) * neg_mask / tensor.maximum(1., neg_mask.sum(1))[:,None]
-                cost += cost_i.sum()
-            else:
-                r_ = theano.gradient.disconnected_grad(r)
-                cost_i = r_[:,None] * (-tensor.log(prob[:,:,1] + off)) * ans[:,cap:]
-                cost += cost_i.sum()
-                cost += cost_bl
+            r_ = theano.gradient.disconnected_grad(r)
+            cost_i = r_[:,None] * (-tensor.log(prob[:,:,1] + off)) * ans[:,cap:]
+            cost += cost_i.sum()
+            cost += cost_bl
             
             # entropy regularization
             if prm.erate > 0.:
@@ -698,8 +577,7 @@ def build_model(tparams, options):
             else:
                 cost_ent = 0. * cost
 
-        reward_last = reward 
-        D_i_gt_last = D_i_gt
+        reward_last = reward
 
         out_p.extend([ans, metrics, D_id])
         out_s.extend([prob, ans, metrics, bl, cost_bl, D_id])
@@ -712,9 +590,9 @@ def build_model(tparams, options):
                 cost_l2reg += prm.l2reg * (w**2).sum()
         cost += cost_l2reg
 
-    f_pred = theano.function([q_i, D_gt_id, is_train, oracle_mode], out_p, updates=[], name='f_pred', on_unused_input='ignore')
+    f_pred = theano.function([q_i, D_gt_id, is_train], out_p, updates=[], name='f_pred', on_unused_input='ignore')
 
-    iin = [q_i, D_gt_id, is_train, oracle_mode]
+    iin = [q_i, D_gt_id, is_train]
     out = [cost, cost_ent] + out_s
 
     updates = []
@@ -755,7 +633,7 @@ def get_samples(input_queries, target_docs, index, options):
     return qi, qi_i, qi_lst, D_gt_id, D_gt_title
 
 
-def pred_error(f_pred, input_queries, target_docs, options, iterator, oracle_mode=False):
+def pred_error(f_pred, input_queries, target_docs, options, iterator):
     """
     Evaluate model on the metrics.
     f_pred: Theano function computing the prediction
@@ -772,12 +650,9 @@ def pred_error(f_pred, input_queries, target_docs, options, iterator, oracle_mod
         # share the current queries with the search engine.
         options['current_queries'] = qi_lst
 
-        if prm.supervised and oracle_mode:
-            options['current_queries_ids'] = index
-
         is_train = 0.
 
-        out = f_pred(qi_i, D_gt_id, is_train, int(oracle_mode))
+        out = f_pred(qi_i, D_gt_id, is_train)
         
         if i % prm.dispFreq == 0:
             print '=================================================================='
@@ -851,50 +726,6 @@ def train():
     for k,v in vocab.items():
         options['vocabinv'][v] = k
 
-    #if prm.cand_terms_source.lower() in ['syn', 'all']:
-    from nltk.corpus import stopwords
-    nltk.download('stopwords')
-    options['stop'] = dict.fromkeys(stopwords.words('english'), 0)
-
-    if prm.cand_terms_source.lower() in ['syn', 'all']:
-
-        print 'Loading Synonyms...'
-        from nltk.corpus import wordnet
-        nltk.download('wordnet')
-        syns = {}
-        for word in wordnet.all_synsets():
-            word = word.name()[:-5]
-            if word not in options['stop']:
-                if word not in syns:
-                    syns[word] = {}
-
-                for ss in wordnet.synsets(word):
-                    for syn in ss.lemma_names():
-                        syn = syn.lower()
-                        if syn in options['vocab']:
-                            # only use known words.
-                            syns[word][syn] = options['vocab'][syn]
-
-        # transform dict(word, dict(syn,idx)) in dict(word, (list,list))
-        options['syns'] = {}
-        for k, v in syns.items():
-            options['syns'][k] = (v.keys(), v.values())
-
-
-    if prm.cand_terms_source.lower() in ['synemb', 'all']:
-        print 'Loading Synonyms...'
-        syns_ = pkl.load(open(prm.synemb_path))
-        options['syns'] = {}
-        for word, (syn_words, syn_idxs) in syns_.items():
-            syn_words_ = []
-            syn_idxs_ = []
-            for i, syn_idx in enumerate(syn_idxs):
-                if syn_idx < prm.n_words:
-                    syn_words_.append(syn_words[i])
-                    syn_idxs_.append(syn_idx)
-
-            options['syns'][word] = (syn_words_, syn_idxs_)
-        
     print 'Loading Environment...'
     if prm.engine.lower() == 'lucene':
         import lucene_search
@@ -908,13 +739,6 @@ def train():
     qi_train, qi_valid, qi_test = dh5.get_queries()
     dt_train, dt_valid, dt_test = dh5.get_doc_ids()
     
-    if prm.supervised:
-        options['supervised'] = -2 * np.ones((len(qi_train), prm.max_feedback_docs_train, prm.max_words_input), np.int32)
-
-        if prm.supervised_reload:
-            with h5py.File(prm.supervised_reload, 'r') as ft:
-                options['supervised'][:len(ft['supervised'])] = ft['supervised'].value
-
     if prm.train_size == -1:
         train_size = len(qi_train)
     else:
@@ -997,17 +821,12 @@ def train():
 
                 # share the current queries with the search engine.
                 options['current_queries'] = qi_lst
-                if prm.supervised:
-                    options['current_queries_ids'] = train_index
 
                 n_samples += len(qi)
 
                 is_train = 1.
-                oracle_mode = 1.
 
-                st11 = time.time()
-                out = f_grad_shared(qi_i, D_gt_id, is_train, oracle_mode)
-                print 'f_grad_shared', time.time() - st11
+                out = f_grad_shared(qi_i, D_gt_id, is_train)
 
                 cost = out.pop(0)
                 cost_ent = out.pop(0)
@@ -1065,10 +884,6 @@ def train():
                     kf_valid = get_minibatches_idx(len(qi_valid), prm.batch_size_pred, shuffle=True, max_samples=valid_size)
                     kf_test = get_minibatches_idx(len(qi_test), prm.batch_size_pred, shuffle=True, max_samples=test_size)
 
-                    if prm.supervised:
-                        print '\nEvaluating Oracle - Training Set'
-                        train_oracle_metrics = pred_error(f_pred, qi_train, dt_train, options, kf_train, oracle_mode=True)
-
                     print '\nEvaluating - Training Set'
                     train_metrics = pred_error(f_pred, qi_train, dt_train, options, kf_train)
 
@@ -1092,10 +907,6 @@ def train():
                     print '====================================================================================================='
                     print '  '.join(prm.metrics_map.keys())
                     print
-                    if prm.supervised:
-                        print 'Train Oracle:'
-                        print train_oracle_metrics
-                        print
                     print 'Train:'
                     print train_metrics
                     print
@@ -1123,10 +934,6 @@ def train():
                     else:
                         params = unzip(tparams)
                     np.savez(prm.saveto, history_errs=history_errs, **params)
-
-                    if prm.supervised:
-                        with h5py.File(prm.supervised, 'w') as h5f:
-                            h5f.create_dataset('supervised', data=options['supervised'])
 
                     print 'Done'
 

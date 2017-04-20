@@ -79,11 +79,6 @@ class LuceneSearch():
         print 'Loading Title-ID mapping...'
         self.title_id_map, self.id_title_map = self.get_title_id_map()
 
-        if prm.idf_path:
-            print 'Loading IDF dictionary...'
-            self.idf = pkl.load(open(prm.idf_path))
-
-
     def get_title_id_map(self):
 
         # get number of docs
@@ -103,40 +98,16 @@ class LuceneSearch():
         return title_id, id_title
 
 
-    def add_idf(self, txt):
-        txt = utils.clean(txt)
-        txt = txt.lower()
-        df = set()
-        for word in wordpunct_tokenize(txt):
-            if word not in df:
-                df.add(word)
-                self.idf[word] += 1.
-
-
     def add_doc(self, doc_id, title, txt, add_terms):
 
         doc = Document()
         txt = utils.clean(txt)
 
         if add_terms:
-            if prm.top_tfidf > 0:
-                words_idx = []
-                words, _ = utils.top_tfidf(txt.lower(), self.idf, prm.top_tfidf, prm.min_term_freq)
-
-                if len(words) == 0:
-                    words.append('unk')
-                    
-                for w in words:
-                    if w in self.vocab:
-                        words_idx.append(self.vocab[w])
-                    else:
-                        words_idx.append(-1) # unknown words.
-
-            else:
-                txt_ = txt.lower()
-                words_idx, words = utils.text2idx2([txt_], self.vocab, prm.max_terms_per_doc)
-                words_idx = words_idx[0]
-                words = words[0]
+            txt_ = txt.lower()
+            words_idx, words = utils.text2idx2([txt_], self.vocab, prm.max_terms_per_doc)
+            words_idx = words_idx[0]
+            words = words[0]
 
         doc.add(Field("id", str(doc_id), self.t1))
         doc.add(Field("title", title, self.t1))
@@ -166,52 +137,7 @@ class LuceneSearch():
         self.t3 = FieldType()
         self.t3.setStored(True)
         self.t3.setIndexOptions(IndexOptions.NONE)
-
-        if add_terms:
-            if prm.top_tfidf > 0 or prm.idf_path:
-                print 'Creating IDF dictionary...'
-                self.idf = defaultdict(int)
-                doc_id = 0
-                if docs_path.lower().endswith('.hdf5'):
-                    import corpus_hdf5
-                    corpus = corpus_hdf5.CorpusHDF5(docs_path) 
-                    for txt in corpus.get_text_iter():
-                        self.add_idf(txt)
-
-                        if doc_id % 1000 == 0:
-                            print 'Creating IDF, doc', doc_id
-                        doc_id += 1
-
-                else:
-                    # ClueWeb09
-                    import warc
-                    import gzip
-                    from bs4 import BeautifulSoup
-                    # list all files in the folder.
-                    paths = []
-                    for root, directories, filenames in os.walk(docs_path):
-                        for filename in filenames: 
-                            paths.append(os.path.join(root,filename))
-
-                    for path in paths:
-                        with gzip.open(path, mode='rb') as gzf:
-                            for record in warc.WARCFile(fileobj=gzf):
-                                # remove html tags
-                                txt = BeautifulSoup(record.payload[:1000*1000], "lxml").get_text()
-                                # remove WARC headers.
-                                txt = '\n'.join(txt.split('\n')[10:])
-
-                                self.add_idf(txt)
-
-                                if doc_id % 1000 == 0:
-                                    print 'Creating IDF, doc', doc_id
-                                doc_id += 1
-
-                for key, val in self.idf.items():
-                    self.idf[key] = math.log(float(doc_id) / val)
-
-                pkl.dump(self.idf, open(prm.idf_path,'wb'))
-
+       
         fsDir = MMapDirectory(Paths.get(index_folder))
         writerConfig = IndexWriterConfig(StandardAnalyzer())
         self.writer = IndexWriter(fsDir, writerConfig)
@@ -219,46 +145,16 @@ class LuceneSearch():
         print "Indexing documents..."
 
         doc_id = 0
-        if docs_path.lower().endswith('.hdf5'):
-            import corpus_hdf5
-            corpus = corpus_hdf5.CorpusHDF5(docs_path) 
-            for txt in corpus.get_text_iter():
-                title = corpus.get_article_title(doc_id)
-                self.add_doc(doc_id, title, txt, add_terms)
-                if doc_id % 1000 == 0:
-                    print 'indexing doc', doc_id
-                doc_id += 1
-        else:
-            # ClueWeb09
-            import warc
-            import gzip
-            from bs4 import BeautifulSoup
 
-            # list all files in the folder.
-            paths = []
-            for root, directories, filenames in os.walk(docs_path):
-                for filename in filenames: 
-                    paths.append(os.path.join(root,filename))
-
-            for path in paths:
-                with gzip.open(path, mode='rb') as gzf:
-                    for record in warc.WARCFile(fileobj=gzf):
-                        if 'warc-trec-id' in record:
-                            title = record['warc-trec-id']
-                        else:
-                            title = record['warc-record-id']
-                        # remove html tags
-                        #txt = BeautifulSoup(record.payload[:1000*1000], "lxml").get_text()
-                        txt = record.payload[:1000*1000]
-                        # remove WARC headers.
-                        txt = '\n'.join(txt.split('\n')[10:])
-                        
-                        self.add_doc(doc_id, title, txt, add_terms)
-                        if doc_id % 1000 == 0:
-                            print 'indexing doc', doc_id
-                        doc_id += 1
-     
-         
+        import corpus_hdf5
+        corpus = corpus_hdf5.CorpusHDF5(docs_path) 
+        for txt in corpus.get_text_iter():
+            title = corpus.get_article_title(doc_id)
+            self.add_doc(doc_id, title, txt, add_terms)
+            if doc_id % 1000 == 0:
+                print 'indexing doc', doc_id
+            doc_id += 1
+                 
         print "Index of %d docs..." % self.writer.numDocs()
         self.writer.close()
 
