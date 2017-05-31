@@ -16,7 +16,7 @@ The datasets and auxiliary files can be [downloaded here](https://drive.google.c
 * **jeopardy_corpus.hdf5**: Jeopardy Corpus: All the English Wikipedia Articles (5.9M documents).
 * **trec-car_dataset.hdf5**: [TREC-CAR dataset](http://trec-car.cs.unh.edu/): a query is Wikipedia article title + a section within that article. Ground-truth documents are paragraphs within that section.
 * **trec-car_corpus.hdf5**: TREC-CAR Corpus: Half of the English Wikipedia Paragraphs, except abstracts.
-* **D_cbow_pdw_8B.pkl**: A python dictionary containing 374,000 pretrained word embeddings from the [Word2Vec tool](https://code.google.com/archive/p/word2vec/).
+* **D_cbow_pdw_8B_norm.pkl**: A python dictionary containing 374,000 pretrained word embeddings from the [Word2Vec tool](https://code.google.com/archive/p/word2vec/).
 
 ## Accessing the Dataset
 
@@ -60,6 +60,10 @@ If you want to use a GPU:
 ```
 THEANO_FLAGS='floatX=float32,device=gpu0' python run.py
 ```
+
+## Training times
+
+Each minibatch iteration should take approximately 1 second on a K80 GPU. I should take 800,000 iterations (7-10 days) to reach a Recall@40 of 47.6% in the TREC-CAR dataset. It is normal that the model starts to select terms only after iteration 50,000.
 
 
 ##Dependencies
