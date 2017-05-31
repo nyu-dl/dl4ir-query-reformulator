@@ -15,8 +15,8 @@ The datasets and auxiliary files can be [downloaded here](https://drive.google.c
 * **jeopardy_dataset.hdf5**: Jeopardy dataset: queries are Jeopardy! TV Show questions and answers are the Wikipedia articles whose title is the answer.
 * **jeopardy_corpus.hdf5**: Jeopardy Corpus: All the English Wikipedia Articles (5.9M documents).
 * **trec-car_dataset.hdf5**: [TREC-CAR dataset](http://trec-car.cs.unh.edu/): a query is Wikipedia article title + a section within that article. Ground-truth documents are paragraphs within that section.
-* **trec-car_corpus.hdf5**: TREC-CAR Corpus: Half of the English Wikipedia Paragraphs (3.5M), except abstracts.
-* **D_cbow_pdw_8B.pkl**: a python dictionary containing 374,000 words where the values are pretrained embeddings from ["Word2Vec tool"](https://code.google.com/archive/p/word2vec/).
+* **trec-car_corpus.hdf5**: TREC-CAR Corpus: Half of the English Wikipedia Paragraphs, except abstracts.
+* **D_cbow_pdw_8B.pkl**: A python dictionary containing 374,000 pretrained word embeddings from the [Word2Vec tool](https://code.google.com/archive/p/word2vec/).
 
 ## Accessing the Dataset
 
