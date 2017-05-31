@@ -7,7 +7,7 @@ from collections import OrderedDict
 ######################
 data_folder = '.'
 n_words = 374000 # words for the vocabulary
-vocab_path = data_folder + '/data/D_cbow_pdw_8B.pkl' # Path to the python dictionary containing the vocabulary.
+vocab_path = data_folder + '/data/D_cbow_pdw_8B_norm.pkl' # Path to the python dictionary containing the vocabulary.
 wordemb_path = data_folder + '/data/D_cbow_pdw_8B_norm.pkl' # Path to the python dictionary containing the word embeddings.
 dataset_path = data_folder + '/data/jeopardy_dataset.hdf5' # path to load the hdf5 dataset containing queries and ground-truth documents.
 docs_path = data_folder + '/data/jeopardy_corpus.hdf5' # Path to load the articles and links.
