@@ -66,7 +66,7 @@ THEANO_FLAGS='floatX=float32,device=gpu0' python run.py
 Each minibatch iteration should take approximately 1 second on a K80 GPU. I should take 800,000 iterations (7-10 days) to reach a Recall@40 of 47.6% in the TREC-CAR dataset. It is normal that the model starts to select terms only after iteration 50,000.
 
 
-##Dependencies
+## Dependencies
 
 To run the code, you will need:
 * Python 2.7
