@@ -7,11 +7,11 @@ from collections import OrderedDict
 ######################
 data_folder = '.'
 n_words = 374000 # words for the vocabulary
-vocab_path = data_folder + '/data/D_cbow_pdw_8B_norm.pkl' # Path to the python dictionary containing the vocabulary.
-wordemb_path = data_folder + '/data/D_cbow_pdw_8B_norm.pkl' # Path to the python dictionary containing the word embeddings.
-dataset_path = data_folder + '/data/jeopardy_dataset.hdf5' # path to load the hdf5 dataset containing queries and ground-truth documents.
-docs_path = data_folder + '/data/jeopardy_corpus.hdf5' # Path to load the articles and links.
-docs_path_term = data_folder + '/data/jeopardy_corpus.hdf5' # Path to load the articles and links.
+vocab_path = data_folder + '/D_cbow_pdw_8B_norm.pkl' # Path to the python dictionary containing the vocabulary.
+wordemb_path = data_folder + '/D_cbow_pdw_8B_norm.pkl' # Path to the python dictionary containing the word embeddings.
+dataset_path = data_folder + '/jeopardy_dataset.hdf5' # path to load the hdf5 dataset containing queries and ground-truth documents.
+docs_path = data_folder + '/jeopardy_corpus.hdf5' # Path to load the articles and links.
+docs_path_term = data_folder + '/jeopardy_corpus.hdf5' # Path to load the articles and links.
 
 
 
@@ -22,8 +22,8 @@ engine = 'lucene' # Search engine used to retrieve documents.
 n_threads = 20 # number of parallel process that will execute the queries on the search engine.
 index_name = 'index' # index name for the search engine. Used when engine is 'lucene'.
 index_name_term = 'index_terms' # index name for the search engine. Used when engine is 'lucene'.
-index_folder = data_folder + '/data/' + index_name + '/' # folder to store lucene's index. It will be created in case it does not exist.
-index_folder_term = data_folder + '/data/' + index_name_term + '/' # folder to store lucene's index. It will be created in case it does not exist.
+index_folder = data_folder + '/' + index_name + '/' # folder to store lucene's index. It will be created in case it does not exist.
+index_folder_term = data_folder + '/' + index_name_term + '/' # folder to store lucene's index. It will be created in case it does not exist.
 local_index_folder = './' + index_name
 local_index_folder_term = './' + index_name_term
 use_cache = False # If True, cache (query-retrieved docs) pairs. Watch for memory usage.
