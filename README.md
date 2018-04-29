@@ -72,13 +72,14 @@ To run the code, you will need:
 * Python 2.7
 * [NumPy](http://www.numpy.org/)
 * [scikit learn](http://scikit-learn.org/stable/index.html)
-* [Theano 0.9 or higher](http://deeplearning.net/software/theano/)
+* [Theano 0.9](http://deeplearning.net/software/theano/)
 * [NLTK](http://www.nltk.org/)
 * [h5py](http://www.h5py.org/)
 * [PyLucene 6.2 or higher](http://lucene.apache.org/pylucene/)
 
 We recommend that you have at least 32GB of RAM. If you are going to use a GPU, the card must have at least 6GB.
 
+Note: If you are using Theano 1.0 you will probably see a "NullTypeGradError". Switching back to Theano 0.9 fixes this problem.
 
 ## Reference
 
