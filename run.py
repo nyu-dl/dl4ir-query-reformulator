@@ -271,8 +271,6 @@ def f(q_i, D_gt_id, tparams, is_train, trng, options):
     else:
         q_aa = q_a
 
-    q_a_avg = q_a.sum(1) / tensor.maximum(1., q_m.sum(1, keepdims=True))
-
     out = []
     for n_iter in range(prm.n_iterations):
 
