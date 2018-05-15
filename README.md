@@ -8,7 +8,7 @@ A Query Reformulation Framework based on Deep Reinforcement Learning.
 
 ## Dataset and Other Files
 
-The datasets and auxiliary files can be [downloaded here](https://drive.google.com/drive/folders/0BwmD_VLjROrfLWk3QmctMXpWRkE?usp=sharing). They are under the BSD 3 License.
+The datasets and auxiliary files can be [downloaded here](https://drive.google.com/drive/folders/0BwmD_VLjROrfLWk3QmctMXpWRkE?usp=sharing). They are under BSD 3 License.
 
 * **msa_dataset.hdf5**: MS Academic dataset: a query is the title of a paper and the ground-truth documents are the papers cited within.
 * **msa_corpus.hdf5**: MS Academic corpus: each document consists of a paper title and abstract.
